@@ -91,6 +91,7 @@ export default function Dashboard({ onLogout }) {
             <div style={S.gatewayLabel}>Gateway URL</div>
             <a href={API_URL} target="_blank" rel="noreferrer" style={S.gatewayUrl}>{API_URL.replace('https://', '')}</a>
           </div>
+          <button onClick={onStats} style={{ ...S.logoutBtn, marginRight: 4, color: 'var(--blue)', borderColor: 'rgba(37,99,235,0.3)' }}>📊 Statistik</button>
           <button onClick={onLogout} style={S.logoutBtn}>Keluar</button>
         </div>
       </header>

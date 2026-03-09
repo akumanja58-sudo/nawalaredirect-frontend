@@ -42,3 +42,7 @@ export const domainAPI = {
 };
 
 export default api;
+
+export const statsAPI = {
+  getDetailed: () => api.get('/api/domains/stats/detailed'),
+};
