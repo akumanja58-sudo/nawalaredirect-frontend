@@ -6,7 +6,7 @@ import AddDomainForm from '../components/AddDomainForm';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://nawalaredirect-backend-production.up.railway.app';
 
-export default function Dashboard({ onLogout }) {
+export default function Dashboard({ onLogout, onStats }) {
   const [domains, setDomains] = useState([]);
   const [stats, setStats] = useState(null);
   const [groupStats, setGroupStats] = useState([]);
