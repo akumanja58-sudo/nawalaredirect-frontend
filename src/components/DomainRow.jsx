@@ -100,7 +100,7 @@ export default function DomainRow({ domain, onRefresh, groups = [] }) {
         {/* Hasil cek indiwtf */}
         {ispResult && (
           <div style={{ ...S.ispResult, background: ispResult.isBlocked ? 'var(--red-dim)' : 'var(--green-dim)', borderColor: ispResult.isBlocked ? 'rgba(220,38,38,0.2)' : 'rgba(22,163,74,0.2)', color: ispResult.isBlocked ? 'var(--red)' : 'var(--green)' }}>
-            {ispResult.isBlocked ? '🚫 Domain ini terkena Nawala/Kominfo!' : '✅ Domain ini aman, tidak terkena Nawala'}
+            {ispResult.isBlocked ? '🚫 Domain ini terkena Nawala/Kominfo!' : `✅ Domain ini aman (via ${ispResult.source === 'trustpositif' ? 'TrustPositif + indiwtf' : 'indiwtf'})`}
           </div>
         )}
 
