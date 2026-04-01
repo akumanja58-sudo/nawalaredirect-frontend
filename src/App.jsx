@@ -3,10 +3,20 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Statistics from './pages/Statistics';
 import { authAPI } from './api';
+import useAutoLogout from './hooks/useAutoLogout';
+
+function AuthenticatedApp({ onLogout }) {
+  const [page, setPage] = useState('dashboard');
+
+  // Auto logout setelah 1 jam tidak aktif
+  useAutoLogout(onLogout);
+
+  if (page === 'statistics') return <Statistics onBack={() => setPage('dashboard')} />;
+  return <Dashboard onLogout={onLogout} onStats={() => setPage('statistics')} />;
+}
 
 export default function App() {
   const [auth, setAuth] = useState(false);
-  const [page, setPage] = useState('dashboard');
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -24,15 +34,11 @@ export default function App() {
     </div>
   );
 
-  if (!auth) return <Login onLogin={() => setAuth(true)} />;
-
   function handleLogout() {
     localStorage.removeItem('nawala_token');
     setAuth(false);
-    setPage('dashboard');
   }
 
-  if (page === 'statistics') return <Statistics onBack={() => setPage('dashboard')} />;
-
-  return <Dashboard onLogout={handleLogout} onStats={() => setPage('statistics')} />;
+  if (!auth) return <Login onLogin={() => setAuth(true)} />;
+  return <AuthenticatedApp onLogout={handleLogout} />;
 }
