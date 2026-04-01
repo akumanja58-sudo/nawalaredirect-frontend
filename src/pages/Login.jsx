@@ -1,71 +1,86 @@
 import { useState } from 'react';
 import { authAPI } from '../api';
 
-export default function Login({ onLogin }) {
-  const [u, setU] = useState('');
-  const [p, setP] = useState('');
-  const [err, setErr] = useState('');
+export default function Login({ onLogin, expiredMsg }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
+  async function handleLogin(e) {
     e.preventDefault();
-    setErr(''); setLoading(true);
+    setLoading(true);
+    setError('');
     try {
-      const res = await authAPI.login(u, p);
+      const res = await authAPI.login(username, password);
       localStorage.setItem('nawala_token', res.data.token);
       onLogin();
-    } catch (ex) {
-      setErr(ex.response?.data?.error || 'Koneksi gagal');
-    } finally { setLoading(false); }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login gagal');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div style={S.page}>
       <div style={S.card}>
-        <div style={S.logo}>
-          <div style={S.logoIcon}>⬡</div>
-          <div>
-            <div style={S.logoTitle}>NawalaRedirect</div>
-            <div style={S.logoSub}>Domain Gateway System</div>
+        <div style={S.logo}>⬡</div>
+        <div style={S.title}>NawalaRedirect</div>
+        <div style={S.sub}>Domain Gateway Control Panel</div>
+
+        {/* Pesan session expired */}
+        {expiredMsg && (
+          <div style={S.expiredBanner}>
+            🔒 Sesi kamu telah berakhir karena tidak aktif. Silakan login kembali.
           </div>
-        </div>
+        )}
 
-        <div style={S.divider} />
+        {error && <div style={S.errorBanner}>{error}</div>}
 
-        <form onSubmit={handleSubmit} style={S.form}>
+        <div style={S.form}>
           <div style={S.field}>
             <label style={S.label}>Username</label>
-            <input style={S.input} value={u} onChange={e=>setU(e.target.value)} autoFocus autoComplete="username" placeholder="admin" />
+            <input
+              style={S.input}
+              type="text"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              placeholder="admin"
+              autoFocus
+            />
           </div>
           <div style={S.field}>
             <label style={S.label}>Password</label>
-            <input style={S.input} type="password" value={p} onChange={e=>setP(e.target.value)} autoComplete="current-password" placeholder="••••••••" />
+            <input
+              style={S.input}
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              onKeyDown={e => e.key === 'Enter' && handleLogin(e)}
+            />
           </div>
-          {err && <div style={S.err}>⚠ {err}</div>}
-          <button style={{...S.btn, opacity: loading ? 0.7 : 1}} type="submit" disabled={loading}>
+          <button style={{ ...S.btn, opacity: loading ? 0.7 : 1 }} onClick={handleLogin} disabled={loading}>
             {loading ? 'Masuk...' : 'Masuk'}
           </button>
-        </form>
-
-        <div style={S.footer}>Unauthorized access is prohibited</div>
+        </div>
       </div>
     </div>
   );
 }
 
 const S = {
-  page: { minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:16 },
-  card: { width:'100%', maxWidth:380, background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:12, padding:'32px 28px', boxShadow:'var(--shadow-md)', animation:'fadeUp .3s ease' },
-  logo: { display:'flex', alignItems:'center', gap:12, marginBottom:20 },
-  logoIcon: { width:40, height:40, background:'var(--accent)', color:'white', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 },
-  logoTitle: { fontWeight:600, fontSize:17, color:'var(--text)', letterSpacing:'-0.3px' },
-  logoSub: { fontSize:12, color:'var(--text-muted)', marginTop:1 },
-  divider: { height:1, background:'var(--border)', marginBottom:24 },
-  form: { display:'flex', flexDirection:'column', gap:14 },
-  field: { display:'flex', flexDirection:'column', gap:6 },
-  label: { fontSize:13, fontWeight:500, color:'var(--text-dim)' },
-  input: { border:'1px solid var(--border2)', borderRadius:'var(--radius)', padding:'10px 12px', fontSize:14, outline:'none', color:'var(--text)', background:'var(--bg3)', transition:'border .15s' },
-  err: { fontSize:13, color:'var(--red)', background:'var(--red-dim)', border:'1px solid rgba(220,38,38,0.15)', borderRadius:'var(--radius)', padding:'10px 12px' },
-  btn: { background:'var(--accent)', color:'white', border:'none', borderRadius:'var(--radius)', padding:'11px', fontSize:14, fontWeight:500, cursor:'pointer', transition:'opacity .15s', marginTop:4 },
-  footer: { marginTop:20, fontSize:11, color:'var(--text-muted)', textAlign:'center' },
+  page: { minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  card: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 380, boxShadow: 'var(--shadow)', textAlign: 'center' },
+  logo: { width: 52, height: 52, background: 'var(--accent)', color: 'white', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, margin: '0 auto 16px' },
+  title: { fontWeight: 700, fontSize: 20, color: 'var(--text)', letterSpacing: '-0.3px', marginBottom: 4 },
+  sub: { fontSize: 12, color: 'var(--text-muted)', marginBottom: 24 },
+  expiredBanner: { background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', color: '#b45309', borderRadius: 8, padding: '10px 14px', fontSize: 12, marginBottom: 16, textAlign: 'left', lineHeight: 1.5 },
+  errorBanner: { background: 'var(--red-dim)', border: '1px solid rgba(220,38,38,0.2)', color: 'var(--red)', borderRadius: 8, padding: '10px 14px', fontSize: 12, marginBottom: 16 },
+  form: { display: 'flex', flexDirection: 'column', gap: 14, textAlign: 'left' },
+  field: { display: 'flex', flexDirection: 'column', gap: 6 },
+  label: { fontSize: 12, fontWeight: 500, color: 'var(--text-dim)' },
+  input: { border: '1px solid var(--border2)', borderRadius: 8, padding: '10px 14px', fontSize: 13, outline: 'none', color: 'var(--text)', background: 'var(--bg)', width: '100%' },
+  btn: { background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 8, padding: '12px', cursor: 'pointer', fontSize: 14, fontWeight: 600, marginTop: 4 },
 };

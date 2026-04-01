@@ -3,23 +3,60 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Statistics from './pages/Statistics';
 import { authAPI } from './api';
-import useAutoLogout from './hooks/useAutoLogout';
+import { useAutoLogout } from './hooks/useAutoLogout';
+
+function WarningBanner({ onStay }) {
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+      background: '#f59e0b', color: '#fff',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '12px 24px', fontSize: 13, fontWeight: 500,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    }}>
+      <span>⚠️ Sesi kamu akan berakhir dalam 5 menit karena tidak aktif.</span>
+      <button onClick={onStay} style={{
+        background: '#fff', color: '#b45309', border: 'none',
+        borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 12,
+      }}>
+        Tetap Login
+      </button>
+    </div>
+  );
+}
 
 function AuthenticatedApp({ onLogout }) {
   const [page, setPage] = useState('dashboard');
+  const { warning, resetTimer } = useAutoLogout(onLogout);
 
-  // Auto logout setelah 1 jam tidak aktif
-  useAutoLogout(onLogout);
+  if (page === 'statistics') return (
+    <>
+      {warning && <WarningBanner onStay={resetTimer} />}
+      <Statistics onBack={() => setPage('dashboard')} />
+    </>
+  );
 
-  if (page === 'statistics') return <Statistics onBack={() => setPage('dashboard')} />;
-  return <Dashboard onLogout={onLogout} onStats={() => setPage('statistics')} />;
+  return (
+    <>
+      {warning && <WarningBanner onStay={resetTimer} />}
+      <Dashboard onLogout={onLogout} onStats={() => setPage('statistics')} />
+    </>
+  );
 }
 
 export default function App() {
   const [auth, setAuth] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [expiredMsg, setExpiredMsg] = useState(false);
 
   useEffect(() => {
+    // Cek apakah logout karena session expired
+    const reason = localStorage.getItem('nawala_logout_reason');
+    if (reason === 'session_expired') {
+      setExpiredMsg(true);
+      localStorage.removeItem('nawala_logout_reason');
+    }
+
     const token = localStorage.getItem('nawala_token');
     if (!token) { setChecking(false); return; }
     authAPI.verify()
@@ -37,8 +74,9 @@ export default function App() {
   function handleLogout() {
     localStorage.removeItem('nawala_token');
     setAuth(false);
+    setExpiredMsg(false);
   }
 
-  if (!auth) return <Login onLogin={() => setAuth(true)} />;
+  if (!auth) return <Login onLogin={() => { setAuth(true); setExpiredMsg(false); }} expiredMsg={expiredMsg} />;
   return <AuthenticatedApp onLogout={handleLogout} />;
 }
