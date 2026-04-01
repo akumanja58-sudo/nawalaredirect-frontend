@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-const TIMEOUT_DURATION = 60 * 60 * 1000; // 1 jam dalam ms
-const WARNING_BEFORE = 5 * 60 * 1000;    // warning 5 menit sebelum logout
+const TIMEOUT_DURATION = 30 * 1000; // 30 detik
+const WARNING_BEFORE = 10 * 1000;   // warning 10 detik sebelum
 
 export default function useAutoLogout(onLogout) {
   const timeoutRef = useRef(null);
