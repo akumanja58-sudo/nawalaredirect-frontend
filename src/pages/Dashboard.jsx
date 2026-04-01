@@ -236,7 +236,7 @@ const S = {
   checkBtn: { background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text-dim)', padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 500, borderRadius: 'var(--radius)' },
 
   // Group grid - 2 kolom
-  groupGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 8 },
+  groupGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 8, alignItems: 'start' },
 
   // Group card
   groupBox: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: 'var(--shadow)' },
