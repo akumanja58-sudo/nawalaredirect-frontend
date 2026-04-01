@@ -236,10 +236,10 @@ const S = {
   checkBtn: { background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text-dim)', padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 500, borderRadius: 'var(--radius)' },
 
   // Group grid - 2 kolom
-  groupGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 8, alignItems: 'start' },
+  groupGrid: { columns: 2, columnGap: 16, marginBottom: 8 },
 
   // Group card
-  groupBox: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: 'var(--shadow)' },
+  groupBox: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: 'var(--shadow)', breakInside: 'avoid', marginBottom: 16, display: 'inline-block', width: '100%' },
   groupBoxHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg)' },
   groupBoxLeft: { display: 'flex', flexDirection: 'column', gap: 2 },
   groupBoxName: { fontWeight: 600, fontSize: 14, color: 'var(--text)', textTransform: 'capitalize' },
