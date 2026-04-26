@@ -15,9 +15,7 @@ export default function DomainRow({ domain, onRefresh, groups = [] }) {
   const isBlocked = domain.is_blocked === 1;
   const isInactive = domain.is_active === 0;
   const isPriority = domain.is_priority === 1;
-  const statusColor = isBlocked ? 'var(--red)' : isInactive ? 'var(--text-muted)' : 'var(--green)';
-  const statusLabel = isBlocked ? 'Nawala' : isInactive ? 'Nonaktif' : 'Aktif';
-  const statusBg = isBlocked ? 'var(--red-dim)' : isInactive ? '#f4f4f5' : 'var(--green-dim)';
+  const dotColor = isBlocked ? '#dc2626' : isInactive ? '#9ca3af' : '#16a34a';
 
   async function handleCheck() {
     setChecking(true);
@@ -33,9 +31,8 @@ export default function DomainRow({ domain, onRefresh, groups = [] }) {
       const res = await api.post(`/api/domains/${domain.id}/check-isp`);
       setIspResult(res.data);
       await onRefresh();
-    } catch (e) {
-      alert('Cek gagal: ' + (e.response?.data?.error || e.message));
-    } finally { setCheckingISP(false); }
+    } catch (e) { alert('Cek gagal: ' + (e.response?.data?.error || e.message)); }
+    finally { setCheckingISP(false); }
   }
 
   async function handleToggle() {
@@ -54,12 +51,10 @@ export default function DomainRow({ domain, onRefresh, groups = [] }) {
   }
 
   async function handleSetPriority() {
-    if (isPriority) return; // udah prioritas
+    if (isPriority) return;
     setSettingPriority(true);
-    try {
-      await api.post(`/api/domains/${domain.id}/set-priority`);
-      await onRefresh();
-    } catch { alert('Gagal set prioritas'); }
+    try { await api.post(`/api/domains/${domain.id}/set-priority`); await onRefresh(); }
+    catch { alert('Gagal set prioritas'); }
     finally { setSettingPriority(false); }
   }
 
@@ -71,91 +66,97 @@ export default function DomainRow({ domain, onRefresh, groups = [] }) {
     } catch { alert('Gagal simpan group'); }
   }
 
+  const statusLabel = isBlocked ? 'Nawala' : isInactive ? 'Nonaktif' : 'Aktif';
+  const statusStyle = isBlocked
+    ? { background: '#fee2e2', color: '#b91c1c' }
+    : isInactive
+      ? { background: '#f3f4f6', color: '#6b7280' }
+      : { background: '#dcfce7', color: '#15803d' };
+
   return (
-    <div style={{ ...S.row, borderLeft: isPriority ? '3px solid #f59e0b' : '3px solid transparent' }}>
-      <div style={{ ...S.statusDot, background: statusColor }} />
-      <div style={S.info}>
-        <div style={S.urlRow}>
-          {/* Bintang prioritas */}
-          <button
-            onClick={handleSetPriority}
-            disabled={settingPriority || isPriority}
-            title={isPriority ? 'Domain prioritas utama' : 'Jadikan prioritas'}
-            style={{ ...S.starBtn, color: isPriority ? '#f59e0b' : 'var(--border2)', cursor: isPriority ? 'default' : 'pointer' }}
-          >
+    <>
+      <tr style={{ borderBottom: '0.5px solid var(--color-border-tertiary)' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--color-background-secondary)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        {/* Dot status */}
+        <td style={S.td}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, display: 'inline-block' }} />
+        </td>
+        {/* Bintang prioritas */}
+        <td style={S.td}>
+          <button onClick={handleSetPriority} disabled={settingPriority || isPriority}
+            title={isPriority ? 'Domain prioritas' : 'Jadikan prioritas'}
+            style={{
+              background: 'transparent', border: 'none', cursor: isPriority ? 'default' : 'pointer',
+              fontSize: 14, color: isPriority ? '#f59e0b' : 'var(--color-border-secondary)', padding: 0, lineHeight: 1
+            }}>
             {isPriority ? '★' : '☆'}
           </button>
-          <span style={S.url}>{domain.url}</span>
-          {domain.group_name && <span style={S.groupTag}>{domain.group_name}</span>}
-          {isPriority && <span style={S.priorityTag}>Prioritas</span>}
-          <span style={{ ...S.badge, background: statusBg, color: statusColor }}>{statusLabel}</span>
-        </div>
-        <div style={S.meta}>
-          {domain.label && <span style={S.metaLabel}>{domain.label}</span>}
-          {domain.response_time && <span style={S.metaItem}>{domain.response_time}ms</span>}
-          {domain.last_checked && <span style={S.metaItem}>Cek: {new Date(domain.last_checked).toLocaleTimeString('id-ID')}</span>}
-          {domain.fail_count > 0 && <span style={{ ...S.metaItem, color: 'var(--red)' }}>Gagal: {domain.fail_count}x</span>}
-        </div>
-
-        {/* Hasil cek indiwtf */}
-        {ispResult && (
-          <div style={{ ...S.ispResult, background: ispResult.isBlocked ? 'var(--red-dim)' : 'var(--green-dim)', borderColor: ispResult.isBlocked ? 'rgba(220,38,38,0.2)' : 'rgba(22,163,74,0.2)', color: ispResult.isBlocked ? 'var(--red)' : 'var(--green)' }}>
-            {ispResult.isBlocked ? '🚫 Domain ini terkena Nawala/Kominfo!' : `✅ Domain ini aman (via ${ispResult.source === 'trustpositif' ? 'TrustPositif + indiwtf' : 'indiwtf'})`}
+        </td>
+        {/* URL */}
+        <td style={{ ...S.td, maxWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-text-primary)' }}>
+              {domain.url}
+            </span>
+            {isPriority && <span style={{ ...S.badge, background: '#fef3c7', color: '#b45309', flexShrink: 0 }}>Prioritas</span>}
           </div>
-        )}
-
-        {editingGroup && (
-          <div style={S.editRow}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Group:</span>
-            <input style={S.editInput} list="group-list" value={groupInput}
-              onChange={e => setGroupInput(e.target.value)}
-              placeholder="nama group" autoFocus
-              onKeyDown={e => e.key === 'Enter' && handleSaveGroup()} />
-            <datalist id="group-list">
-              {groups.map(g => <option key={g} value={g} />)}
-            </datalist>
-            <button style={S.saveBtn} onClick={handleSaveGroup}>Simpan</button>
-            <button style={S.cancelBtn} onClick={() => setEditingGroup(false)}>Batal</button>
+          {/* ISP result inline */}
+          {ispResult && (
+            <div style={{ fontSize: 10, marginTop: 3, color: ispResult.isBlocked ? '#b91c1c' : '#15803d', fontWeight: 500 }}>
+              {ispResult.isBlocked ? '🚫 Nawala/Kominfo' : `✅ Aman (via ${ispResult.source === 'trustpositif' ? 'TrustPositif+indiwtf' : 'indiwtf'})`}
+            </div>
+          )}
+          {/* Edit group inline */}
+          {editingGroup && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+              <input style={S.editInput} list="group-list" value={groupInput}
+                onChange={e => setGroupInput(e.target.value)}
+                placeholder="nama group" autoFocus
+                onKeyDown={e => e.key === 'Enter' && handleSaveGroup()} />
+              <datalist id="group-list">{groups.map(g => <option key={g} value={g} />)}</datalist>
+              <button style={S.saveBtn} onClick={handleSaveGroup}>OK</button>
+              <button style={S.cancelBtn} onClick={() => setEditingGroup(false)}>Batal</button>
+            </div>
+          )}
+        </td>
+        {/* Status */}
+        <td style={S.td}>
+          <span style={{ ...S.badge, ...statusStyle }}>{statusLabel}</span>
+        </td>
+        {/* Waktu cek */}
+        <td style={{ ...S.td, fontSize: 11, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+          {domain.last_checked ? new Date(domain.last_checked).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+        </td>
+        {/* Aksi */}
+        <td style={S.td}>
+          <div style={{ display: 'flex', gap: 3 }}>
+            <button style={S.btn} onClick={() => setEditingGroup(!editingGroup)} title="Set group">Grp</button>
+            <button style={{ ...S.btn, color: checkingISP ? 'var(--color-text-secondary)' : '#2563eb' }}
+              onClick={handleCheckISP} disabled={checkingISP} title="Cek Nawala">
+              {checkingISP ? '...' : '🇮🇩'}
+            </button>
+            <button style={S.btn} onClick={handleCheck} disabled={checking} title="Basic check">
+              {checking ? '…' : '↻'}
+            </button>
+            <button style={S.btn} onClick={handleToggle} disabled={toggling}>
+              {domain.is_active === 1 ? '⏸' : '▶'}
+            </button>
+            <button style={{ ...S.btn, color: '#b91c1c' }} onClick={handleDelete} disabled={deleting}>
+              {deleting ? '…' : '✕'}
+            </button>
           </div>
-        )}
-      </div>
-      <div style={S.actions}>
-        <button style={S.actionBtn} onClick={() => setEditingGroup(!editingGroup)} title="Set group">Group</button>
-        <button style={{ ...S.actionBtn, color: checkingISP ? 'var(--text-muted)' : 'var(--blue)' }} onClick={handleCheckISP} disabled={checkingISP} title="Cek Nawala">
-          {checkingISP ? '...' : '🇮🇩'}
-        </button>
-        <button style={S.actionBtn} onClick={handleCheck} disabled={checking} title="Basic check">
-          {checking ? '...' : '↻'}
-        </button>
-        <button style={S.actionBtn} onClick={handleToggle} disabled={toggling}>
-          {domain.is_active === 1 ? '⏸' : '▶'}
-        </button>
-        <button style={{ ...S.actionBtn, color: 'var(--red)' }} onClick={handleDelete} disabled={deleting}>
-          {deleting ? '...' : '✕'}
-        </button>
-      </div>
-    </div>
+        </td>
+      </tr>
+    </>
   );
 }
 
 const S = {
-  row: { display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg2)', transition: 'border-left-color .2s' },
-  statusDot: { width: 7, height: 7, borderRadius: '50%', marginTop: 6, flexShrink: 0 },
-  info: { flex: 1, minWidth: 0 },
-  urlRow: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  starBtn: { background: 'transparent', border: 'none', fontSize: 16, padding: '0 2px', lineHeight: 1, flexShrink: 0 },
-  url: { fontSize: 13, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320, fontFamily: 'var(--mono)' },
-  groupTag: { fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(99,102,241,0.1)', color: '#6366f1', border: '1px solid rgba(99,102,241,0.2)' },
-  priorityTag: { fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' },
-  badge: { fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 20 },
-  meta: { display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 4, alignItems: 'center' },
-  metaLabel: { fontSize: 12, color: 'var(--text-dim)', fontWeight: 500 },
-  metaItem: { fontSize: 11, color: 'var(--text-muted)' },
-  ispResult: { marginTop: 8, fontSize: 12, fontWeight: 500, padding: '6px 12px', borderRadius: 6, border: '1px solid' },
-  actions: { display: 'flex', gap: 4, flexShrink: 0 },
-  actionBtn: { background: 'transparent', border: '1px solid var(--border2)', color: 'var(--text-dim)', cursor: 'pointer', padding: '5px 9px', fontSize: 13, borderRadius: 6 },
-  editRow: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 },
-  editInput: { border: '1px solid var(--border2)', borderRadius: 6, padding: '5px 10px', fontSize: 12, outline: 'none', color: 'var(--text)', width: 160, background: 'var(--bg3)' },
-  saveBtn: { background: 'var(--accent)', color: 'white', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 500 },
-  cancelBtn: { background: 'transparent', border: '1px solid var(--border2)', color: 'var(--text-dim)', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12 },
+  td: { padding: '8px 12px', verticalAlign: 'middle' },
+  badge: { fontSize: 10, fontWeight: 500, padding: '2px 7px', borderRadius: 20, whiteSpace: 'nowrap' },
+  btn: { background: 'transparent', border: '0.5px solid var(--color-border-secondary)', color: 'var(--color-text-secondary)', cursor: 'pointer', padding: '3px 7px', fontSize: 11, borderRadius: 5 },
+  editInput: { border: '0.5px solid var(--color-border-secondary)', borderRadius: 5, padding: '3px 8px', fontSize: 11, outline: 'none', color: 'var(--color-text-primary)', width: 140, background: 'var(--color-background-primary)' },
+  saveBtn: { background: 'var(--color-background-info)', color: 'var(--color-text-info)', border: 'none', borderRadius: 5, padding: '3px 8px', cursor: 'pointer', fontSize: 11, fontWeight: 500 },
+  cancelBtn: { background: 'transparent', border: '0.5px solid var(--color-border-secondary)', color: 'var(--color-text-secondary)', borderRadius: 5, padding: '3px 8px', cursor: 'pointer', fontSize: 11 },
 };

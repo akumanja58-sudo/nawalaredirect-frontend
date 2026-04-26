@@ -59,14 +59,6 @@ export default function Dashboard({ onLogout, onStats }) {
     finally { setCheckingAllISP(false); }
   }
 
-  // Group domains
-  const noGroup = domains.filter(d => !d.group_name || d.group_name === '');
-  const groupMap = {};
-  groups.forEach(g => {
-    groupMap[g] = domains.filter(d => d.group_name === g);
-  });
-
-  // Filter function
   const applyFilter = (list) => list.filter(d => {
     if (filter === 'all') return true;
     if (filter === 'active') return d.is_active === 1 && d.is_blocked === 0;
@@ -75,14 +67,11 @@ export default function Dashboard({ onLogout, onStats }) {
     return true;
   });
 
-  // Semua group + tanpa group
+  const noGroup = domains.filter(d => !d.group_name || d.group_name === '');
   const allGroupEntries = [
-    ...groups.map(g => ({ name: g, domains: groupMap[g] || [] })),
+    ...groups.map(g => ({ name: g, domains: domains.filter(d => d.group_name === g) })),
     ...(noGroup.length > 0 ? [{ name: '', domains: noGroup }] : []),
-  ];
-
-  const filteredGroupEntries = allGroupEntries
-    .map(e => ({ ...e, domains: applyFilter(e.domains) }))
+  ].map(e => ({ ...e, domains: applyFilter(e.domains) }))
     .filter(e => e.domains.length > 0);
 
   return (
@@ -105,15 +94,13 @@ export default function Dashboard({ onLogout, onStats }) {
             <div style={S.gatewayLabel}>Gateway URL</div>
             <a href={API_URL} target="_blank" rel="noreferrer" style={S.gatewayUrl}>{API_URL.replace('https://', '')}</a>
           </div>
-          <button onClick={onStats} style={{ ...S.logoutBtn, marginRight: 4, color: 'var(--blue)', borderColor: 'rgba(37,99,235,0.3)' }}>📊 Statistik</button>
-          <button onClick={onLogout} style={S.logoutBtn}>Keluar</button>
+          <button onClick={onStats} style={{ ...S.headerBtn, color: '#2563eb', borderColor: 'rgba(37,99,235,0.3)' }}>📊 Statistik</button>
+          <button onClick={onLogout} style={S.headerBtn}>Keluar</button>
         </div>
       </header>
 
-      <div style={S.divider} />
-
       <main style={S.main}>
-        {/* Stats global */}
+        {/* Stats */}
         {stats && (
           <div style={S.statsRow}>
             <StatCard label="Total Domain" value={stats.total} icon="◈" />
@@ -140,60 +127,70 @@ export default function Dashboard({ onLogout, onStats }) {
                 <button key={v} style={{ ...S.tab, ...(filter === v ? S.tabActive : {}) }} onClick={() => setFilter(v)}>{l}</button>
               ))}
             </div>
-            <button style={{ ...S.checkBtn, color: 'var(--blue)', borderColor: 'rgba(37,99,235,0.3)', background: 'var(--blue-dim)', opacity: checkingAllISP ? 0.6 : 1 }} onClick={handleCheckAllISP} disabled={checkingAllISP}>
+            <button style={{ ...S.actionBtn, color: '#2563eb', borderColor: 'rgba(37,99,235,0.3)', background: 'rgba(37,99,235,0.05)', opacity: checkingAllISP ? 0.6 : 1 }} onClick={handleCheckAllISP} disabled={checkingAllISP}>
               {checkingAllISP ? 'Checking...' : '🇮🇩 Cek ISP'}
             </button>
-            <button style={{ ...S.checkBtn, opacity: checkingAll ? 0.6 : 1 }} onClick={handleCheckAll} disabled={checkingAll}>
+            <button style={{ ...S.actionBtn, opacity: checkingAll ? 0.6 : 1 }} onClick={handleCheckAll} disabled={checkingAll}>
               {checkingAll ? 'Checking...' : '↻ Cek Semua'}
             </button>
           </div>
         </div>
 
-        {/* Domain grid per group */}
+        {/* Group tables */}
         {loading ? (
-          <div style={S.emptyFull}>Memuat data...</div>
-        ) : filteredGroupEntries.length === 0 ? (
-          <div style={S.emptyFull}>Tidak ada domain ditemukan.</div>
+          <div style={S.empty}>Memuat data...</div>
+        ) : allGroupEntries.length === 0 ? (
+          <div style={S.empty}>Tidak ada domain ditemukan.</div>
         ) : (
-          <div style={S.groupGrid}>
-            {filteredGroupEntries.map(entry => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {allGroupEntries.map(entry => {
               const gStats = groupStats.find(g => g.group === entry.name);
               const priorityDomain = entry.domains.find(d => d.is_priority === 1);
               return (
-                <div key={entry.name || '__nogroup__'} style={S.groupBox}>
-                  {/* Group card header */}
-                  <div style={S.groupBoxHeader}>
-                    <div style={S.groupBoxLeft}>
-                      <div style={S.groupBoxName}>{entry.name || 'Tanpa Group'}</div>
+                <div key={entry.name || '__nogroup__'} style={S.groupCard}>
+                  {/* Group header */}
+                  <div style={S.groupHeader}>
+                    <div style={S.groupLeft}>
+                      <span style={S.groupName}>{entry.name || 'Tanpa Group'}</span>
                       {entry.name && (
-                        <a href={`${API_URL}/${entry.name}`} target="_blank" rel="noreferrer" style={S.groupBoxLink}>
+                        <a href={`${API_URL}/${entry.name}`} target="_blank" rel="noreferrer" style={S.groupLink}>
                           /{entry.name} ↗
                         </a>
                       )}
                     </div>
-                    <div style={S.groupBoxStats}>
-                      {gStats && <>
-                        <span style={{ color: 'var(--green)', fontSize: 12 }}>✓ {gStats.active}</span>
-                        <span style={{ color: 'var(--red)', fontSize: 12 }}>✕ {gStats.blocked}</span>
-                        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>∑ {gStats.total}</span>
-                      </>}
+                    <div style={S.groupStats}>
+                      <span style={{ color: '#15803d', fontSize: 12 }}>✓ {gStats?.active ?? '-'}</span>
+                      <span style={{ color: '#b91c1c', fontSize: 12 }}>✕ {gStats?.blocked ?? '-'}</span>
+                      <span style={{ color: 'var(--color-text-secondary)', fontSize: 12 }}>∑ {gStats?.total ?? entry.domains.length}</span>
                     </div>
                   </div>
 
-                  {/* Prioritas info */}
+                  {/* Prioritas bar */}
                   {priorityDomain && (
-                    <div style={S.priorityInfo}>
-                      <span style={S.priorityInfoLabel}>⭐ Aktif:</span>
-                      <span style={S.priorityInfoUrl}>{priorityDomain.url.replace('https://', '')}</span>
+                    <div style={S.priorityBar}>
+                      <span style={S.priorityLabel}>★ Aktif:</span>
+                      <span style={S.priorityUrl}>{priorityDomain.url.replace('https://', '')}</span>
                     </div>
                   )}
 
-                  {/* Domain list */}
-                  <div style={S.groupBoxList}>
-                    {entry.domains.map(d => (
-                      <DomainRow key={d.id} domain={d} onRefresh={fetchData} groups={groups} />
-                    ))}
-                  </div>
+                  {/* Table */}
+                  <table style={S.table}>
+                    <thead>
+                      <tr>
+                        <th style={{ ...S.th, width: 28 }}></th>
+                        <th style={{ ...S.th, width: 28 }}></th>
+                        <th style={S.th}>URL</th>
+                        <th style={{ ...S.th, width: 80 }}>Status</th>
+                        <th style={{ ...S.th, width: 56 }}>Cek</th>
+                        <th style={{ ...S.th, width: 140 }}>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entry.domains.map(d => (
+                        <DomainRow key={d.id} domain={d} onRefresh={fetchData} groups={groups} />
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               );
             })}
@@ -215,41 +212,38 @@ const S = {
   logoMark: { width: 36, height: 36, background: 'var(--accent)', color: 'white', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 },
   logoTitle: { fontWeight: 600, fontSize: 16, color: 'var(--text)', letterSpacing: '-0.3px' },
   logoSub: { fontSize: 11, color: 'var(--text-muted)', marginTop: 1 },
-  headerRight: { display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' },
+  headerRight: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
   clockBox: { textAlign: 'right' },
   clock: { fontFamily: 'var(--mono)', fontSize: 18, fontWeight: 500, color: 'var(--text)', letterSpacing: 2 },
   clockDate: { fontSize: 11, color: 'var(--text-muted)', marginTop: 1 },
   gatewayBox: { borderLeft: '1px solid var(--border)', paddingLeft: 16 },
   gatewayLabel: { fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 },
   gatewayUrl: { fontSize: 12, color: 'var(--blue)', textDecoration: 'none', fontFamily: 'var(--mono)' },
-  logoutBtn: { background: 'transparent', border: '1px solid var(--border2)', color: 'var(--text-dim)', padding: '7px 14px', cursor: 'pointer', fontSize: 13, borderRadius: 'var(--radius)', fontWeight: 500 },
-  divider: { height: 1, background: 'var(--border)' },
+  headerBtn: { background: 'transparent', border: '1px solid var(--border2)', color: 'var(--text-dim)', padding: '7px 14px', cursor: 'pointer', fontSize: 13, borderRadius: 'var(--radius)', fontWeight: 500 },
   main: { flex: 1, padding: '20px 24px', maxWidth: 1200, width: '100%', margin: '0 auto' },
   statsRow: { display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 },
-  listHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
-  listTitle: { fontWeight: 600, fontSize: 14, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  listHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, margin: '16px 0 12px' },
+  listTitle: { fontWeight: 600, fontSize: 14, color: 'var(--text)' },
   lastUpdate: { color: 'var(--text-muted)', fontSize: 12, fontWeight: 400 },
   controls: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
   tabs: { display: 'flex', gap: 2, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 3 },
-  tab: { background: 'transparent', border: 'none', color: 'var(--text-dim)', padding: '5px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 500, borderRadius: 6, transition: 'all .15s' },
+  tab: { background: 'transparent', border: 'none', color: 'var(--text-dim)', padding: '5px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 500, borderRadius: 6 },
   tabActive: { background: 'var(--bg2)', color: 'var(--text)', boxShadow: 'var(--shadow)' },
-  checkBtn: { background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text-dim)', padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 500, borderRadius: 'var(--radius)' },
+  actionBtn: { background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text-dim)', padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 500, borderRadius: 'var(--radius)' },
 
-  // Group grid - 2 kolom
-  groupGrid: { columns: 2, columnGap: 16, marginBottom: 8 },
+  groupCard: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: 'var(--shadow)' },
+  groupHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--border)', background: 'var(--bg)' },
+  groupLeft: { display: 'flex', flexDirection: 'column', gap: 2 },
+  groupName: { fontWeight: 600, fontSize: 13, color: 'var(--text)', textTransform: 'capitalize' },
+  groupLink: { fontSize: 11, color: 'var(--blue)', textDecoration: 'none', fontFamily: 'var(--mono)' },
+  groupStats: { display: 'flex', gap: 10, fontWeight: 500 },
+  priorityBar: { display: 'flex', alignItems: 'center', gap: 6, padding: '5px 14px', background: 'rgba(245,158,11,0.05)', borderBottom: '1px solid rgba(245,158,11,0.15)' },
+  priorityLabel: { fontSize: 11, color: '#b45309', fontWeight: 600 },
+  priorityUrl: { fontSize: 11, color: '#78350f', fontFamily: 'var(--mono)' },
 
-  // Group card
-  groupBox: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: 'var(--shadow)', breakInside: 'avoid', marginBottom: 16, display: 'inline-block', width: '100%' },
-  groupBoxHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg)' },
-  groupBoxLeft: { display: 'flex', flexDirection: 'column', gap: 2 },
-  groupBoxName: { fontWeight: 600, fontSize: 14, color: 'var(--text)', textTransform: 'capitalize' },
-  groupBoxLink: { fontSize: 11, color: 'var(--blue)', textDecoration: 'none', fontFamily: 'var(--mono)' },
-  groupBoxStats: { display: 'flex', gap: 10, fontWeight: 500 },
-  priorityInfo: { display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', background: 'rgba(245,158,11,0.05)', borderBottom: '1px solid rgba(245,158,11,0.15)' },
-  priorityInfoLabel: { fontSize: 11, color: '#f59e0b', fontWeight: 600, flexShrink: 0 },
-  priorityInfoUrl: { fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  groupBoxList: { overflow: 'hidden' },
+  table: { width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' },
+  th: { fontSize: 11, fontWeight: 500, color: 'var(--text-muted)', textAlign: 'left', padding: '7px 12px', borderBottom: '1px solid var(--border)', background: 'var(--bg)', userSelect: 'none' },
 
-  emptyFull: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '48px 24px', color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' },
-  footer: { marginTop: 16, fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', padding: '12px 0' },
+  empty: { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '48px 24px', color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' },
+  footer: { marginTop: 20, fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', padding: '12px 0' },
 };
