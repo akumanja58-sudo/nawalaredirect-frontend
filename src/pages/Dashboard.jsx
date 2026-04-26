@@ -182,7 +182,7 @@ export default function Dashboard({ onLogout, onStats }) {
                         <th style={S.th}>URL</th>
                         <th style={{ ...S.th, width: 80 }}>Status</th>
                         <th style={{ ...S.th, width: 56 }}>Cek</th>
-                        <th style={{ ...S.th, width: 140 }}>Aksi</th>
+                        <th style={{ ...S.th, width: 170 }}>Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
